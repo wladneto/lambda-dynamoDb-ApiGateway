@@ -1,0 +1,74 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: Voice-Bots-POC # NOTE: update this with your service name
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-1
+  apiName: voice-bots-api
+  memorySize: 256
+  environment:
+    DYNAMODB_TABLE: 'ServicesVoiceBotPOC'
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"  
+package:
+  individually: true
+  exclude: 
+    - "**/*"
+    - "!node_modules/**"
+    - "!handlers/**"
+functions:
+  serviceCreate:
+    name: create-service-item
+    handler: handlers/create-service.create
+    timeout: 15
+    events:
+      - http:
+         path: service
+         method: post
+  serviceRead:  
+    name: read-service-item
+    handler: handlers/read-service.get
+    timeout: 15
+    events:
+      - http:
+         path: service/{id}
+         method: get
+resources:
+  Resources:
+    ServicesDynamoTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        
+
+     
